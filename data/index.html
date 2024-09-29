@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precision Wattmeter</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .data,
+        .peak-min-data,
+        .calibration,
+        .advanced-calibration {
+            margin-bottom: 30px;
+        }
+
+        .data-box {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .data h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .data p {
+            font-size: 1rem;
+            margin: 10px 0;
+            color: #555;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .data p small {
+            font-size: 1rem;
+            margin-right: 10px;
+            min-width: 100px;
+        }
+
+        .data .large {
+            font-size: 3rem;
+            color: #000;
+        }
+
+        .data .medium {
+            font-size: 2rem;
+            color: #000;
+        }
+
+        .peak-min-data {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .peak-min-data p {
+            font-size: 1rem;
+            margin: 0;
+            color: #555;
+        }
+
+        .peak-min-data strong {
+            color: #000;
+        }
+
+        .peak-min-data span {
+            font-size: 1.8rem;
+            color: #000;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .graph-controls {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .settings {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .settings input {
+            width: calc(100% - 20px);
+        }
+
+        .settings div {
+            margin-bottom: 10px;
+        }
+
+        .peak-min-data {
+            white-space: nowrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .calibration,
+        .advanced-calibration {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .calibration label,
+        .advanced-calibration label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .calibration input,
+        .advanced-calibration input {
+            width: calc(100% - 10px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .calibration-box,
+        .advanced-calibration-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .calibration-box div,
+        .advanced-calibration-box div {
+            flex: 1 1 calc(50% - 20px);
+        }
+
+        .calibration-box div input,
+        .advanced-calibration-box div input {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Precision Wattmeter</h1>
+    </header>
+    <div class="container">
+        <div class="data">
+            <h2>Current Data</h2>
+            <div class="data-box">
+                <p><small>Voltage:</small> <span id="voltage" class="large">0 V</span></p>
+                <p><small>Current:</small> <span id="current" class="large">0 A</span></p>
+                <p><small>Power:</small> <span id="power" class="medium">0 W</span></p>
+                <p><small>Energy:</small> <span id="energy" class="medium">0 Wh</span></p>
+                <p><small>Time Spent:</small> <span id="time" class="medium">00:00:00</span></p>
+            </div>
+        </div>
+        <div class="peak-min-data">
+            <div>
+                <p><strong>Peak Voltage:</strong> <span id="peak-voltage">0 V</span></p>
+                <p><strong>Peak Current:</strong> <span id="peak-current">0 A</span></p>
+                <p><strong>Peak Power:</strong> <span id="peak-power">0 W</span></p>
+            </div>
+            <br>
+            <div>
+                <p><strong>Min. Voltage:</strong> <span id="min-voltage"> V</span></p>
+                <p><strong>Min. Current:</strong> <span id="min-current"> A</span></p>
+                <p><strong>Min. Power:</strong> <span id="min-power"> W</span></p>
+            </div>
+        </div>
+
+        <div class="chart-container" id="chart"></div>
+
+        <div class="graph-controls">
+            <button id="clean-graph">Clean Graph</button>
+            <button id="pause-graph">Pause Graph</button>
+            <input type="number" id="time-range" placeholder="Time range (s)" min="1" max="360000">
+        </div>
+
+        <div class="common-settings">
+            <!-- <h2>Settings</h2> -->
+            <div>
+                <div>
+                    <button id="reset-energy">Reset Energy</button>
+                    <button id="reset-peak">Reset Peak</button>
+                    <button id="reset-min">Reset Minimum Values</button>
+                    <button id="reset-timer">Reset Timer</button>
+                </div>
+                <label><input type="checkbox" id="force-measure-output">Force Measure Output Voltage</label>
+                <label><input type="checkbox" id="force-use-5milliohm">Force Use Low Resistance Shunt (5mΩ)</label>
+            </div>
+        </div>
+
+        <div class="advanced-settings">
+            <h2>Advanced Settings</h2>
+            <div>
+                <label><input type="checkbox" id="log-data">Data-logging to Google Sheet</label>
+                <label for="data-log-interval">Data Log Interval (s):</label>
+                <input type="number" id="data-log-interval" placeholder="Enter data log interval (3-3600s): " min="3"
+                    max="3600">
+            </div>
+            <div>
+                <label for="webserver-update-interval">Webserver Update Interval (s):</label>
+                <input type="number" id="webserver-update-interval" placeholder="Enter update interval (1-30s): "
+                    min="1" max="30">
+            </div>
+            <div>
+                <label><input type="checkbox" id="low-voltage-alarm">Low Voltage Alarm</label>
+                <label for="low-voltage-alarm-voltage">Low Voltage Alarm Voltage (V):</label>
+                <input type="number" id="low-voltage-alarm-voltage" placeholder="Enter alarm voltage" min="0" max="230">
+            </div>
+            <div>
+                <label><input type="checkbox" id="pause-data"> Pause Data</label>
+            </div>
+            <button id="settings-submit">Save Settings</button>
+        </div>
+
+        <div class="calibration">
+            <h2>Calibration</h2>
+            <div class="calibration-box">
+                <div>
+                    <label for="voltage-offset">Voltage Offset:</label>
+                    <input type="text" id="voltage-offset" placeholder="Enter voltage offset">
+                </div>
+                <div>
+                    <label for="voltage-gain">Voltage Gain:</label>
+                    <input type="text" id="voltage-gain" placeholder="Enter voltage gain">
+                </div>
+                <div>
+                    <label for="current-offset">Current Offset:</label>
+                    <input type="text" id="current-offset" placeholder="Enter current offset">
+                </div>
+                <div>
+                    <label for="current-gain">Current Gain:</label>
+                    <input type="text" id="current-gain" placeholder="Enter current gain">
+                </div>
+            </div>
+            <button id="calibration-submit">Submit Calibration Data</button>
+        </div>
+
+        <div class="advanced-calibration">
+            <h2>Advanced Calibration</h2>
+            <div class="advanced-calibration-box">
+                <div>
+                    <label for="pg2">PG2:</label>
+                    <input type="text" id="pg2" placeholder="Enter PG2">
+                </div>
+                <div>
+                    <label for="pg4">PG4:</label>
+                    <input type="text" id="pg4" placeholder="Enter PG4">
+                </div>
+                <div>
+                    <label for="pg8">PG8:</label>
+                    <input type="text" id="pg8" placeholder="Enter PG8">
+                </div>
+                <div>
+                    <label for="pg16">PG16:</label>
+                    <input type="text" id="pg16" placeholder="Enter PG16">
+                </div>
+                <div>
+                    <label for="current-gain-5">Current Gain 5 milliohm:</label>
+                    <input type="text" id="current-gain-5" placeholder="Enter current gain (5 milliohm)">
+                </div>
+                <div>
+                    <label for="current-gain-100">Current Gain 100 milliohm:</label>
+                    <input type="text" id="current-gain-100" placeholder="Enter current gain (100 milliohm)">
+                </div>
+            </div>
+            <button id="advanced-calibration-submit">Submit Advanced Calibration Data</button>
+        </div>
+    </div>
+
+    <script>
+        const gateway = `ws://${window.location.hostname}/ws`;
+        let websocket;
+        
+        
+        let holdOn = false;
+        let measureOutputVoltage = false;
+        let forceUse5mShunt = false;
+        let alarmVoltage = false;
+        let logData = false;
+        // let time = 0;
+
+        function initWebSocket() {
+            console.log('Trying to open a WebSocket connection...');
+            websocket = new WebSocket(gateway);
+            websocket.onopen = onOpen;
+            websocket.onclose = onClose;
+            websocket.onmessage = onMessage;
+        }
+
+        function onOpen(event) {
+            console.log('Connection opened');
+        }
+
+        function onClose(event) {
+            console.log('Connection closed');
+            setTimeout(initWebSocket, 2000);
+        }
+
+        function onMessage(event) {
+            if (1) {
+                const jsonData = JSON.parse(event.data);
+
+                document.getElementById('voltage').textContent = jsonData.voltage.toFixed(5) + ' V';
+                document.getElementById('current').textContent = jsonData.current.toFixed(5) + ' A';
+                document.getElementById('power').textContent = jsonData.power.toFixed(5) + ' W';
+                document.getElementById('energy').textContent = jsonData.energy.toFixed(3) + ' Wh';
+                let seconds = jsonData.time;
+                let minutes = Math.floor(seconds / 60);
+                let hours = Math.floor(minutes / 60);
+                seconds = Math.floor(seconds % 60); // Remaining seconds after converting to minutes
+                minutes = minutes % 60; // Remaining minutes after converting to hours
+
+                document.getElementById('time').textContent =
+                    (hours < 10 ? '0' : '') + hours + ':' +
+                    (minutes < 10 ? '0' : '') + minutes + ':' +
+                    (seconds < 10 ? '0' : '') + seconds;
+
+                document.getElementById('peak-voltage').textContent = jsonData.peakVoltage.toFixed(4) + ' V';
+                document.getElementById('peak-current').textContent = jsonData.peakCurrent.toFixed(4) + ' A';
+                document.getElementById('peak-power').textContent = jsonData.peakPower.toFixed(4) + ' W';
+                document.getElementById('min-voltage').textContent = jsonData.minVoltage.toFixed(4) + ' V';
+                document.getElementById('min-current').textContent = jsonData.minCurrent.toFixed(4) + ' A';
+                document.getElementById('min-power').textContent = jsonData.minPower.toFixed(4) + ' W';
+
+                updateChart('chart', [jsonData.time], [jsonData.voltage], [jsonData.current], [jsonData.power]);
+                // updateChart('voltageChart', [jsonData.time], [jsonData.voltage]);
+                // updateChart('currentChart', [jsonData.time], [jsonData.current]);
+                // updateChart('powerChart', [jsonData.time], [jsonData.power]);
+
+                // time++;
+            }
+        }
+        function initChart(elementId, title) {
+            const layout = {
+                title: title,
+                uirevision: 'true',
+                xaxis: {
+                    autorange: true,
+                    title: 'Time (s)'
+                },
+                yaxis: {
+                    autorange: true
+                }
+            };
+
+            // Initialize data with empty arrays for x and y values
+            var data = [
+                { name: 'voltage', mode: 'lines', line: { color: "#b55400" }, x: [], y: [] },
+                { name: 'current', mode: 'lines', line: { color: "#393e46" }, x: [], y: [] },
+                { name: 'power', mode: 'lines', line: { color: "#222831" }, x: [], y: [] }
+            ];
+
+            Plotly.react(elementId, data, layout);
+        }
+
+        function updateChart(elementId, xData, yData1, yData2, yData3) {
+            Plotly.extendTraces(elementId, {
+                x: [xData, xData, xData], // xData for each trace
+                y: [yData1, yData2, yData3] // yData for each trace
+            }, [0, 1, 2]);
+        }
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            initWebSocket();
+            initChart('chart', 'Combined Data');
+
+            document.getElementById('reset-energy').addEventListener('click', () => {
+                websocket.send(JSON.stringify({ type: 'resetEnergy' }));
+            });
+            document.getElementById('reset-peak').addEventListener('click', () => {
+                websocket.send(JSON.stringify({ type: 'resetPeak' }));
+            });
+            document.getElementById('reset-min').addEventListener('click', () => {
+                websocket.send(JSON.stringify({ type: 'resetMin' }));
+            });
+            document.getElementById('reset-timer').addEventListener('click', () => {
+                websocket.send(JSON.stringify({ type: 'resetTimer' }));
+            });
+            document.getElementById('clean-graph').addEventListener('click', () => {
+                websocket.send(JSON.stringify({ type: 'cleanGraph' }));
+            });
+            document.getElementById('pause-graph').addEventListener('click', () => {
+                holdOn = !holdOn;
+                document.getElementById('pause-graph').innerText = holdOn ? 'Resume Graph' : 'Pause Graph';
+                websocket.send(JSON.stringify({ type: 'holdOn', data: { holdOn: holdOn } }));
+                console.log(holdOn);
+            });
+            // Toggle low voltage alarm and send its status
+            document.getElementById('low-voltage-alarm').addEventListener('click', () => {
+                alarmVoltage = !alarmVoltage;
+                websocket.send(JSON.stringify({
+                    type: 'setLowVoltageAlarm',
+                    data: { lowVoltageAlarm: alarmVoltage }
+                }));
+            });
+
+            // Send alarm voltage setting
+            document.getElementById('low-voltage-alarm-voltage').addEventListener('change', (event) => {
+                const alarmVoltage = event.target.value;
+                websocket.send(JSON.stringify({
+                    type: 'setLowVoltageAlarm',
+                    data: { alarmVoltage: parseFloat(alarmVoltage) }
+                }));
+            });
+        });
+
+        // Placeholder for data simulation
+        // let time = 0;
+        // setInterval(() => {
+        //     time = time + 1;
+        //     const voltage = Math.random() * 230;
+        //     const current = Math.random() * 10;
+        //     const power = voltage * current;
+        //     const energy = power * time / 3600;
+
+        //     document.getElementById('voltage').textContent = voltage.toFixed(2) + ' V';
+        //     document.getElementById('current').textContent = current.toFixed(2) + ' A';
+        //     document.getElementById('power').textContent = power.toFixed(2) + ' W';
+        //     document.getElementById('energy').textContent = energy.toFixed(2) + ' Wh';
+        //     document.getElementById('time').textContent = time + ' s';
+
+        //     updateChart('chart', [time], [voltage], [current], [power]);
+        //     // updateChart('voltageChart', [time], [voltage]);
+        //     // updateChart('currentChart', [time], [current]);
+        //     // updateChart('powerChart', [time], [power]);
+
+        // }, 1000);
+
+    </script>
+</body>
+
+</html>
